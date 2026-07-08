@@ -8,6 +8,8 @@ import '../../../../core/widgets/async_state_switcher.dart';
 import '../../../../core/widgets/fancy_confirm_dialog.dart';
 import '../../../../core/widgets/fancy_prompt_dialog.dart';
 import '../../../kanban/data/model/board_column_model.dart';
+import '../../../workspace/logic/task_filtering.dart';
+import '../../../workspace/presentation/cubits/filters_cubit.dart';
 import '../../../workspace/presentation/cubits/workspace_cubit.dart';
 import '../../data/model/content_creation_item_model.dart';
 import '../../data/repo/content_creation_columns_repository.dart';
@@ -45,7 +47,9 @@ class _ContentCreationBoard extends StatelessWidget {
       },
       child: BlocBuilder<WorkspaceCubit, WorkspaceCubitState>(
         builder: (context, workspace) {
-          return AsyncStateSwitcher<WorkspaceCubitState>(
+          return BlocBuilder<FiltersCubit, FiltersState>(
+            builder: (context, filters) {
+              return AsyncStateSwitcher<WorkspaceCubitState>(
             status: switch (workspace.status) {
               WorkspaceStatus.initial => AsyncStatus.initial,
               WorkspaceStatus.loading => AsyncStatus.loading,
@@ -61,11 +65,11 @@ class _ContentCreationBoard extends StatelessWidget {
             errorMessage: workspace.errorMessage,
             onRetry: () => context.read<WorkspaceCubit>().load(),
             builder: (data) => (context) {
+              final filteredItems = filterContentCreationItems(data.contentCreationItems, filters);
               final columns = data.contentCreationColumns;
               final grouped = <String, List<ContentCreationItemModel>>{
                 for (final c in columns)
-                  c.status:
-                      data.contentCreationItems.where((i) => i.status == c.status).toList(),
+                  c.status: filteredItems.where((i) => i.status == c.status).toList(),
               };
 
               return Padding(
@@ -120,6 +124,8 @@ class _ContentCreationBoard extends StatelessWidget {
                     ],
                   ),
                 ),
+              );
+            },
               );
             },
           );

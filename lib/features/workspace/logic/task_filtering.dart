@@ -1,4 +1,5 @@
 import '../../content_calendar/data/model/content_item_model.dart';
+import '../../content_creation/data/model/content_creation_item_model.dart';
 import '../../tasks/data/model/task_model.dart';
 import '../presentation/cubits/filters_cubit.dart';
 
@@ -53,6 +54,36 @@ List<ContentItemModel> filterContentItems(
     }
     if (f.search.isNotEmpty &&
         !c.title.toLowerCase().contains(f.search.toLowerCase())) {
+      return false;
+    }
+    return true;
+  }).toList();
+}
+
+/// Content Creation cards have no priority/type/platform fields and their
+/// `status` means a pipeline column (Idea/Script/...), not a task status —
+/// so only client, assignee, "should be published on" date, and search
+/// apply here, unlike [filterTasks].
+List<ContentCreationItemModel> filterContentCreationItems(
+    List<ContentCreationItemModel> items, FiltersState f) {
+  return items.where((c) {
+    if (f.clientIds.isNotEmpty &&
+        (c.clientId == null || !f.clientIds.contains(c.clientId))) {
+      return false;
+    }
+    if (f.assigneeIds.isNotEmpty &&
+        (c.assigneeId == null || !f.assigneeIds.contains(c.assigneeId))) {
+      return false;
+    }
+    if (f.dateRange != null) {
+      if (c.shouldBePublishedOn == null) return false;
+      if (c.shouldBePublishedOn!.isBefore(f.dateRange!.start) ||
+          c.shouldBePublishedOn!.isAfter(f.dateRange!.end)) {
+        return false;
+      }
+    }
+    if (f.search.isNotEmpty &&
+        !c.name.toLowerCase().contains(f.search.toLowerCase())) {
       return false;
     }
     return true;
