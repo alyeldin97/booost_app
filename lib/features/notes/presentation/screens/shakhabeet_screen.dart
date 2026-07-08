@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/styling/app_colors.dart';
 import '../../../../core/styling/app_text_styles.dart';
+import '../../../../core/styling/breakpoints.dart';
 import '../../../../core/utils/date_formatters.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -54,14 +56,14 @@ class ShakhabeetScreen extends StatelessWidget {
                           title: 'No notes yet',
                           message: 'Tap "New note" to jot something down.',
                         )
-                      : GridView.builder(
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
-                            childAspectRatio: 1.1,
-                          ),
+                      : MasonryGridView.count(
+                          crossAxisCount: Breakpoints.isDesktop(context)
+                              ? 4
+                              : Breakpoints.isTablet(context)
+                                  ? 3
+                                  : 1,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
                           itemCount: state.notes.length,
                           itemBuilder: (context, i) {
                             final note = state.notes[i];
@@ -109,18 +111,20 @@ class _NoteCard extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(note.title,
-                  style: AppTextStyles.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
-              const SizedBox(height: 6),
-              Expanded(
-                child: Text(
-                  note.content ?? '',
+                  style: AppTextStyles.subtitle, maxLines: 2, overflow: TextOverflow.ellipsis),
+              if (note.content != null && note.content!.trim().isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  note.content!,
                   style: AppTextStyles.body,
-                  maxLines: 6,
+                  maxLines: 20,
                   overflow: TextOverflow.ellipsis,
                 ),
-              ),
+              ],
+              const SizedBox(height: 10),
               Text(DateFormatters.dueDate(note.updatedAt), style: AppTextStyles.label),
             ],
           ),

@@ -37,6 +37,31 @@ class ContentCreationItemsRepository {
     return ContentCreationItemModel.fromJson(row);
   }
 
+  /// Copies every editable field onto a new card in the same column.
+  Future<ContentCreationItemModel> duplicateItem(String id) async {
+    final row = await _client
+        .from('content_creation_items')
+        .select()
+        .eq('id', id)
+        .single();
+    final source = ContentCreationItemModel.fromJson(row);
+    return createItem(ContentCreationItemModel(
+      id: '',
+      name: 'Copy of ${source.name}',
+      description: source.description,
+      status: source.status,
+      script: source.script,
+      deadline: source.deadline,
+      copy: source.copy,
+      driveUrl: source.driveUrl,
+      clientId: source.clientId,
+      shouldBePublishedOn: source.shouldBePublishedOn,
+      assigneeId: source.assigneeId,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    ));
+  }
+
   Future<void> updateItem(String id, Map<String, dynamic> changes) async {
     await _client.from('content_creation_items').update(changes).eq('id', id);
   }

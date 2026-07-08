@@ -190,6 +190,12 @@ class _ContentCreationItemDialogState extends State<_ContentCreationItemDialog> 
             color: AppColors.danger,
             onPressed: _saving ? null : _delete,
           ),
+        if (_isEditing)
+          FancyTextButton(
+            label: 'Duplicate',
+            color: _accent1,
+            onPressed: _saving ? null : _duplicate,
+          ),
         FancyTextButton(
           label: 'Cancel',
           onPressed: _saving ? null : () => Navigator.pop(context),
@@ -280,6 +286,24 @@ class _ContentCreationItemDialogState extends State<_ContentCreationItemDialog> 
       if (mounted) {
         setState(() => _saving = false);
         AppToast.error(context, 'Could not save content: $e');
+      }
+    }
+  }
+
+  Future<void> _duplicate() async {
+    final item = widget.item;
+    if (item == null) return;
+    setState(() => _saving = true);
+    final navigator = Navigator.of(context);
+    try {
+      await context.read<ContentCreationItemsRepository>().duplicateItem(item.id);
+      if (mounted) await context.read<WorkspaceCubit>().load();
+      navigator.pop();
+      if (mounted) AppToast.success(context, 'Content duplicated');
+    } catch (e) {
+      if (mounted) {
+        setState(() => _saving = false);
+        AppToast.error(context, 'Could not duplicate content: $e');
       }
     }
   }
