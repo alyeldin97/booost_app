@@ -130,22 +130,17 @@ class KanbanCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 4,
-                    children: task.platforms
-                        .take(4)
-                        .map((p) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 5, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: AppColors.textMuted.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                p.length >= 2 ? p.substring(0, 2).toUpperCase() : p,
-                                style: AppTextStyles.label
-                                    .copyWith(color: AppColors.textSecondary),
-                              ),
-                            ))
-                        .toList(),
+                    children: task.platforms.take(4).map((p) {
+                      final (icon, color) = platformStyle(p);
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Icon(icon, size: 11, color: color),
+                      );
+                    }).toList(),
                   ),
                 ],
                 const SizedBox(height: 8),

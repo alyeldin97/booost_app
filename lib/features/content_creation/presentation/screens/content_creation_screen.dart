@@ -5,6 +5,8 @@ import '../../../../core/exceptions/lookup_delete_restricted_exception.dart';
 import '../../../../core/styling/app_colors.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/widgets/async_state_switcher.dart';
+import '../../../../core/widgets/fancy_confirm_dialog.dart';
+import '../../../../core/widgets/fancy_prompt_dialog.dart';
 import '../../../kanban/data/model/board_column_model.dart';
 import '../../../workspace/presentation/cubits/workspace_cubit.dart';
 import '../../data/model/content_creation_item_model.dart';
@@ -131,24 +133,12 @@ class _ContentCreationBoard extends StatelessWidget {
           'Move or delete the cards in "${column.title}" before deleting the column.');
       return;
     }
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('Delete "${column.title}"?'),
-        content: const Text('This cannot be undone.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel')),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+    final confirmed = await showFancyConfirmDialog(
+      context,
+      title: 'Delete "${column.title}"?',
+      message: 'This cannot be undone.',
     );
-    if (confirmed != true || !context.mounted) return;
+    if (!confirmed || !context.mounted) return;
     try {
       await context.read<ContentCreationColumnsRepository>().deleteColumn(column.status);
       if (context.mounted) await context.read<WorkspaceCubit>().load();
@@ -184,26 +174,13 @@ class _AddColumnButton extends StatelessWidget {
   }
 
   Future<void> _addColumn(BuildContext context) async {
-    final controller = TextEditingController();
-    final title = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('New column'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'Column name'),
-          onSubmitted: (v) => Navigator.pop(dialogContext, v),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, controller.text),
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+    final title = await showFancyPromptDialog(
+      context,
+      title: 'New column',
+      label: 'Column name',
+      confirmLabel: 'Create',
+      icon: LucideIcons.clapperboard,
+      color: AppColors.highlightPink,
     );
     if (title == null || title.trim().isEmpty || !context.mounted) return;
     try {

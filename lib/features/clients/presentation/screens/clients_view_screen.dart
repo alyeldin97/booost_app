@@ -6,6 +6,7 @@ import '../../../../core/styling/app_colors.dart';
 import '../../../../core/styling/breakpoints.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/widgets/async_state_switcher.dart';
+import '../../../../core/widgets/fancy_prompt_dialog.dart';
 import '../../../workspace/presentation/cubits/filters_cubit.dart';
 import '../../../workspace/presentation/cubits/workspace_cubit.dart';
 import '../../data/repo/clients_repository.dart';
@@ -155,26 +156,13 @@ class _Toolbar extends StatelessWidget {
   }
 
   Future<void> _createClient(BuildContext context) async {
-    final controller = TextEditingController();
-    final name = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('New client'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'Client name'),
-          onSubmitted: (v) => Navigator.pop(dialogContext, v),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, controller.text),
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+    final name = await showFancyPromptDialog(
+      context,
+      title: 'New client',
+      label: 'Client name',
+      confirmLabel: 'Create',
+      icon: LucideIcons.building2,
+      color: AppColors.success,
     );
     if (name == null || name.trim().isEmpty || !context.mounted) return;
     try {

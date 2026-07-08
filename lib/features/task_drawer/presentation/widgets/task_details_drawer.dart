@@ -9,6 +9,7 @@ import '../../../../core/styling/app_text_styles.dart';
 import '../../../../core/utils/app_enums.dart';
 import '../../../../core/utils/date_formatters.dart';
 import '../../../../core/widgets/app_toast.dart';
+import '../../../../core/widgets/fancy_confirm_dialog.dart';
 import '../../../../core/widgets/loading_indicator.dart';
 import '../../../kanban/data/model/board_column_model.dart';
 import '../../../tasks/data/model/task_type_model.dart';
@@ -228,13 +229,21 @@ class _DrawerBodyState extends State<_DrawerBody> {
                     runSpacing: 8,
                     children: workspace.platforms.map((p) {
                       final selected = task.platforms.contains(p.platform);
+                      final (icon, color) = platformStyle(p.platform);
                       return FilterChip(
-                        avatar: const Icon(genericPlatformIcon, size: 14),
+                        avatar: Icon(icon, size: 14, color: selected ? color : AppColors.textMuted),
                         label: Text(p.title),
                         selected: selected,
                         onSelected: (_) => cubit.togglePlatform(p.platform),
-                        selectedColor: AppColors.primaryLight,
-                        checkmarkColor: AppColors.primary,
+                        selectedColor: color.withValues(alpha: 0.14),
+                        checkmarkColor: color,
+                        side: BorderSide(
+                          color: selected ? color.withValues(alpha: 0.5) : AppColors.border,
+                        ),
+                        labelStyle: TextStyle(
+                          color: selected ? color : AppColors.textPrimary,
+                          fontWeight: selected ? FontWeight.w600 : null,
+                        ),
                       );
                     }).toList(),
                   ),
@@ -354,7 +363,8 @@ class _DrawerBodyState extends State<_DrawerBody> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(genericPlatformIcon, size: 16),
+                          Icon(platformStyle(linkedContent.platform).$1,
+                              size: 16, color: platformStyle(linkedContent.platform).$2),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(linkedContent.title, style: AppTextStyles.body),
@@ -418,28 +428,13 @@ class _DrawerBodyState extends State<_DrawerBody> {
     );
   }
 
-  void _confirmDelete(BuildContext context, TaskDrawerCubit cubit) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete task?'),
-        content: const Text('This cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              cubit.deleteTask();
-            },
-            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+  Future<void> _confirmDelete(BuildContext context, TaskDrawerCubit cubit) async {
+    final confirmed = await showFancyConfirmDialog(
+      context,
+      title: 'Delete task?',
+      message: 'This cannot be undone.',
     );
+    if (confirmed) cubit.deleteTask();
   }
 
   InputDecoration _fieldDecoration({String? hint}) => InputDecoration(

@@ -4,6 +4,8 @@ import '../../../../core/exceptions/lookup_delete_restricted_exception.dart';
 import '../../../../core/styling/app_colors.dart';
 import '../../../../core/styling/app_text_styles.dart';
 import '../../../../core/widgets/app_toast.dart';
+import '../../../../core/widgets/fancy_confirm_dialog.dart';
+import '../../../../core/widgets/fancy_prompt_dialog.dart';
 
 class LookupItem {
   const LookupItem(this.key, this.title);
@@ -24,10 +26,12 @@ class LookupListEditor extends StatefulWidget {
     required this.rename,
     required this.create,
     required this.delete,
+    this.color = AppColors.primary,
   });
 
   final String title;
   final IconData icon;
+  final Color color;
   final Future<List<LookupItem>> Function() load;
   final Future<void> Function(String key, String title) rename;
   final Future<void> Function(String title, int nextPosition) create;
@@ -61,30 +65,43 @@ class _LookupListEditorState extends State<LookupListEditor> {
 
   @override
   Widget build(BuildContext context) {
+    final color = widget.color;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [color.withValues(alpha: 0.06), AppColors.surface],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(widget.icon, size: 18, color: AppColors.primary),
-              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(widget.icon, size: 16, color: color),
+              ),
+              const SizedBox(width: 10),
               Text(widget.title, style: AppTextStyles.subtitle),
               const Spacer(),
               TextButton.icon(
                 onPressed: _add,
+                style: TextButton.styleFrom(foregroundColor: color),
                 icon: const Icon(LucideIcons.plus, size: 15),
                 label: const Text('Add'),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           if (_loading)
             const Padding(
               padding: EdgeInsets.all(16),
@@ -96,33 +113,21 @@ class _LookupListEditorState extends State<LookupListEditor> {
               child: Text('None yet.', style: AppTextStyles.caption),
             )
           else
-            for (final item in _items) _LookupRow(item: item, editor: this),
+            for (final item in _items)
+              _LookupRow(item: item, editor: this, color: color),
         ],
       ),
     );
   }
 
   Future<void> _add() async {
-    final controller = TextEditingController();
-    final title = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('New ${widget.title.toLowerCase()}'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'Name'),
-          onSubmitted: (v) => Navigator.pop(dialogContext, v),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, controller.text),
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+    final title = await showFancyPromptDialog(
+      context,
+      title: 'New ${widget.title.toLowerCase()}',
+      label: 'Name',
+      confirmLabel: 'Create',
+      icon: LucideIcons.plus,
+      color: widget.color,
     );
     if (title == null || title.trim().isEmpty) return;
     try {
@@ -134,25 +139,13 @@ class _LookupListEditorState extends State<LookupListEditor> {
   }
 
   Future<void> _rename(LookupItem item) async {
-    final controller = TextEditingController(text: item.title);
-    final title = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Rename'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          onSubmitted: (v) => Navigator.pop(dialogContext, v),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, controller.text),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+    final title = await showFancyPromptDialog(
+      context,
+      title: 'Rename',
+      label: 'Name',
+      initialValue: item.title,
+      icon: LucideIcons.pencil,
+      color: widget.color,
     );
     if (title == null || title.trim().isEmpty || title.trim() == item.title) return;
     try {
@@ -164,24 +157,12 @@ class _LookupListEditorState extends State<LookupListEditor> {
   }
 
   Future<void> _delete(LookupItem item) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('Delete "${item.title}"?'),
-        content: const Text('This cannot be undone.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel')),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+    final confirmed = await showFancyConfirmDialog(
+      context,
+      title: 'Delete "${item.title}"?',
+      message: 'This cannot be undone.',
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
     try {
       await widget.delete(item.key);
       await _refresh();
@@ -196,20 +177,34 @@ class _LookupListEditorState extends State<LookupListEditor> {
 }
 
 class _LookupRow extends StatelessWidget {
-  const _LookupRow({required this.item, required this.editor});
+  const _LookupRow({required this.item, required this.editor, required this.color});
   final LookupItem item;
   final _LookupListEditorState editor;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
+      ),
       child: Row(
         children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 10),
           Expanded(child: Text(item.title, style: AppTextStyles.body)),
           IconButton(
             icon: const Icon(LucideIcons.pencil, size: 15),
             tooltip: 'Rename',
+            color: color,
             onPressed: () => editor._rename(item),
           ),
           IconButton(

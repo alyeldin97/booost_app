@@ -38,6 +38,16 @@ extension TaskPriorityX on TaskPriority {
 // renders with this one generic icon.
 const IconData genericPlatformIcon = LucideIcons.share2;
 
+/// The seeded platform vocabulary (Facebook/Instagram/TikTok) gets a
+/// recognizable icon + brand-ish color; anything else falls back to the
+/// generic platform look.
+(IconData, Color) platformStyle(String platformKey) => switch (platformKey) {
+      'instagram' => (LucideIcons.camera, const Color(0xFFDB2777)),
+      'facebook' => (LucideIcons.thumbsUp, const Color(0xFF1877F2)),
+      'tiktok' => (LucideIcons.music2, const Color(0xFF0F172A)),
+      _ => (genericPlatformIcon, AppColors.textSecondary),
+    };
+
 enum ContentType { reel, post, story, carousel, ad, email, blog, landingPage }
 
 extension ContentTypeX on ContentType {

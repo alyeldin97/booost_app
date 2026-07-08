@@ -6,6 +6,7 @@ import '../../../../core/styling/app_text_styles.dart';
 import '../../../../core/utils/date_formatters.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/fancy_dialog.dart';
 import '../../../workspace/presentation/cubits/workspace_cubit.dart';
 import '../../data/model/note_model.dart';
 import '../../data/repo/notes_repository.dart';
@@ -173,55 +174,52 @@ class _NoteEditorDialogState extends State<_NoteEditorDialog> {
     }
   }
 
+  static const _amber1 = Color(0xFFF59E0B);
+  static const _amber2 = Color(0xFFEAB308);
+
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480, maxHeight: 500),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _titleController,
-                style: AppTextStyles.h3,
-                decoration: const InputDecoration(border: InputBorder.none, hintText: 'Title'),
+    return FancyDialog(
+      title: 'Note',
+      icon: LucideIcons.notebookPen,
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [_amber1, _amber2],
+      ),
+      width: 480,
+      maxHeight: 520,
+      child: SizedBox(
+        height: 340,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              controller: _titleController,
+              style: AppTextStyles.h3,
+              decoration: fancyFieldDecoration('Title', color: _amber1),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: TextField(
+                controller: _contentController,
+                maxLines: null,
+                expands: true,
+                textAlignVertical: TextAlignVertical.top,
+                style: AppTextStyles.body,
+                decoration: fancyFieldDecoration('', hint: 'Write here...', color: _amber1)
+                    .copyWith(labelText: null, alignLabelWithHint: true),
               ),
-              const Divider(),
-              Expanded(
-                child: TextField(
-                  controller: _contentController,
-                  maxLines: null,
-                  expands: true,
-                  textAlignVertical: TextAlignVertical.top,
-                  style: AppTextStyles.body,
-                  decoration:
-                      const InputDecoration(border: InputBorder.none, hintText: 'Write here...'),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  TextButton.icon(
-                    onPressed: _delete,
-                    icon: const Icon(LucideIcons.trash2, size: 16, color: AppColors.danger),
-                    label: const Text('Delete', style: TextStyle(color: AppColors.danger)),
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton(onPressed: _save, child: const Text('Save')),
-                ],
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
+      actions: [
+        FancyTextButton(label: 'Delete', color: AppColors.danger, onPressed: _delete),
+        FancyTextButton(label: 'Cancel', onPressed: () => Navigator.of(context).pop()),
+        FancyFilledButton(
+            label: 'Save', icon: LucideIcons.check, color: _amber1, onPressed: _save),
+      ],
     );
   }
 }

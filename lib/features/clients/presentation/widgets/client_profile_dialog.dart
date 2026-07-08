@@ -4,6 +4,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/styling/app_colors.dart';
 import '../../../../core/styling/app_text_styles.dart';
 import '../../../../core/widgets/app_toast.dart';
+import '../../../../core/widgets/fancy_confirm_dialog.dart';
+import '../../../../core/widgets/fancy_dialog.dart';
 import '../../../workspace/presentation/cubits/workspace_cubit.dart';
 import '../../data/model/client_analytics_model.dart';
 import '../../data/model/client_model.dart';
@@ -95,23 +97,14 @@ class _ClientProfileContentState extends State<_ClientProfileContent> {
   }
 
   Future<void> _deleteClient() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete client?'),
-        content: Text(
-            'This will remove ${_client.name} and cascade-delete their tasks and content items. This cannot be undone.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+    final confirmed = await showFancyConfirmDialog(
+      context,
+      title: 'Delete client?',
+      message:
+          'This will remove ${_client.name} and cascade-delete their tasks and content items. This cannot be undone.',
+      useRootNavigator: false,
     );
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
     try {
       await context.read<ClientsRepository>().deleteClient(_client.id);
       if (mounted) await context.read<WorkspaceCubit>().load();
@@ -501,23 +494,20 @@ class _AnalyticsEntryDialogState extends State<_AnalyticsEntryDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Row(
+    return FancyDialog(
+      title: 'Add weekly analytics',
+      icon: LucideIcons.barChart3,
+      color: widget.color,
+      width: 420,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(LucideIcons.barChart3, color: widget.color, size: 20),
-          const SizedBox(width: 8),
-          const Text('Add weekly analytics'),
-        ],
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                  'Week of ${_weekStart.year}-${_weekStart.month.toString().padLeft(2, '0')}-${_weekStart.day.toString().padLeft(2, '0')}'),
-              trailing: Icon(LucideIcons.calendar, size: 16, color: widget.color),
+          Material(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
               onTap: () async {
                 final picked = await showDatePicker(
                   context: context,
@@ -527,21 +517,42 @@ class _AnalyticsEntryDialogState extends State<_AnalyticsEntryDialog> {
                 );
                 if (picked != null) setState(() => _weekStart = picked);
               },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  children: [
+                    Icon(LucideIcons.calendar, size: 16, color: widget.color),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Week of ${_weekStart.year}-${_weekStart.month.toString().padLeft(2, '0')}-${_weekStart.day.toString().padLeft(2, '0')}',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            _numField('Total sales', _totalSales),
-            _numField('Net sales', _netSales),
-            _numField('Retention rate (%)', _retention),
-            _numField('ROAS', _roas),
-            _numField('CPC', _cpc),
-            _numField('CTR (%)', _ctr),
-            _numField('Ad spend', _adSpend),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+          _numField('Total sales', _totalSales),
+          _numField('Net sales', _netSales),
+          _numField('Retention rate (%)', _retention),
+          _numField('ROAS', _roas),
+          _numField('CPC', _cpc),
+          _numField('CTR (%)', _ctr),
+          _numField('Ad spend', _adSpend),
+        ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: widget.color),
+        FancyTextButton(label: 'Cancel', onPressed: () => Navigator.pop(context)),
+        FancyFilledButton(
+          label: 'Save',
+          icon: LucideIcons.check,
+          color: widget.color,
           onPressed: () {
             Navigator.pop(
               context,
@@ -559,18 +570,17 @@ class _AnalyticsEntryDialogState extends State<_AnalyticsEntryDialog> {
               ),
             );
           },
-          child: const Text('Save'),
         ),
       ],
     );
   }
 
   Widget _numField(String label, TextEditingController controller) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.only(bottom: 12),
         child: TextField(
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(labelText: label, isDense: true),
+          decoration: fancyFieldDecoration(label, color: widget.color),
         ),
       );
 }

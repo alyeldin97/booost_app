@@ -52,6 +52,7 @@ class SettingsScreen extends StatelessWidget {
                         LookupListEditor(
                           title: 'Task Types',
                           icon: LucideIcons.tag,
+                          color: AppColors.primary,
                           load: () async => (await taskTypesRepo.getTypes())
                               .map((t) => LookupItem(t.taskType, t.title))
                               .toList(),
@@ -63,6 +64,7 @@ class SettingsScreen extends StatelessWidget {
                         LookupListEditor(
                           title: 'Platforms',
                           icon: LucideIcons.share2,
+                          color: AppColors.highlightPink,
                           load: () async => (await platformsRepo.getPlatforms())
                               .map((p) => LookupItem(p.platform, p.title))
                               .toList(),

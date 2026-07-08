@@ -4,6 +4,9 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/styling/app_colors.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/widgets/async_state_switcher.dart';
+import '../../../../core/widgets/fancy_confirm_dialog.dart';
+import '../../../../core/widgets/fancy_dialog.dart';
+import '../../../../core/widgets/fancy_prompt_dialog.dart';
 import '../../../clients/data/model/client_model.dart';
 import '../../../task_drawer/presentation/cubits/task_drawer_cubit.dart';
 import '../../../tasks/data/model/task_model.dart';
@@ -139,14 +142,50 @@ class _KanbanBoard extends StatelessWidget {
         ? clients.first.id
         : await showDialog<String>(
             context: context,
-            builder: (dialogContext) => SimpleDialog(
-              title: const Text('New task for which client?'),
-              children: clients
-                  .map((c) => SimpleDialogOption(
-                        onPressed: () => Navigator.pop(dialogContext, c.id),
-                        child: Text(c.name),
-                      ))
-                  .toList(),
+            builder: (dialogContext) => FancyDialog(
+              title: 'New task for which client?',
+              icon: LucideIcons.building2,
+              width: 380,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final c in clients)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Material(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(10),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(10),
+                          onTap: () => Navigator.pop(dialogContext, c.id),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 12,
+                                  backgroundColor:
+                                      AppColors.clientColorFor(c.id).withValues(alpha: 0.18),
+                                  child: Text(c.initials,
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.clientColorFor(c.id))),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(child: Text(c.name)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           );
     if (clientId == null || !context.mounted) return;
@@ -173,24 +212,12 @@ class _KanbanBoard extends StatelessWidget {
           'Move or delete the tasks in "${column.title}" before deleting the column.');
       return;
     }
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('Delete "${column.title}"?'),
-        content: const Text('This cannot be undone.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel')),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+    final confirmed = await showFancyConfirmDialog(
+      context,
+      title: 'Delete "${column.title}"?',
+      message: 'This cannot be undone.',
     );
-    if (confirmed != true || !context.mounted) return;
+    if (!confirmed || !context.mounted) return;
     try {
       await context.read<BoardColumnsRepository>().deleteColumn(column.status);
       if (context.mounted) await context.read<WorkspaceCubit>().load();
@@ -226,26 +253,12 @@ class _AddColumnButton extends StatelessWidget {
   }
 
   Future<void> _addColumn(BuildContext context) async {
-    final controller = TextEditingController();
-    final title = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('New column'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'Column name'),
-          onSubmitted: (v) => Navigator.pop(dialogContext, v),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, controller.text),
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+    final title = await showFancyPromptDialog(
+      context,
+      title: 'New column',
+      label: 'Column name',
+      confirmLabel: 'Create',
+      icon: LucideIcons.columns3,
     );
     if (title == null || title.trim().isEmpty || !context.mounted) return;
     try {
