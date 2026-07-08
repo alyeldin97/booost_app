@@ -117,6 +117,7 @@ class _KanbanBoard extends StatelessWidget {
                                   _createTask(context, columns[i].status, data.clients),
                               onDeleteColumn: () =>
                                   _deleteColumn(context, columns[i], grouped),
+                              onDuplicateTask: (task) => _duplicateTask(context, task),
                             ),
                           _AddColumnButton(nextPosition: columns.length),
                         ],
@@ -202,6 +203,21 @@ class _KanbanBoard extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) AppToast.error(context, 'Could not create task: $e');
+    }
+  }
+
+  Future<void> _duplicateTask(BuildContext context, TaskModel task) async {
+    try {
+      final duplicate = await context.read<TasksRepository>().duplicateTask(task.id);
+      if (context.mounted) {
+        await context.read<WorkspaceCubit>().load();
+        if (context.mounted) {
+          AppToast.success(context, 'Task duplicated');
+          context.read<TaskDrawerCubit>().open(duplicate.id);
+        }
+      }
+    } catch (e) {
+      if (context.mounted) AppToast.error(context, 'Could not duplicate task: $e');
     }
   }
 

@@ -17,6 +17,7 @@ class KanbanCard extends StatelessWidget {
     this.isDragging = false,
     this.onTap,
     this.onMoveTo,
+    this.onDuplicate,
   });
 
   final TaskModel task;
@@ -25,6 +26,7 @@ class KanbanCard extends StatelessWidget {
   final bool isDragging;
   final VoidCallback? onTap;
   final void Function(String)? onMoveTo;
+  final VoidCallback? onDuplicate;
 
   @override
   Widget build(BuildContext context) {
@@ -90,18 +92,37 @@ class KanbanCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (onMoveTo != null)
-                      PopupMenuButton<String>(
-                        tooltip: 'Move to...',
+                    if (onMoveTo != null || onDuplicate != null)
+                      PopupMenuButton<String?>(
+                        tooltip: 'Card options',
                         icon: const Icon(LucideIcons.moreHorizontal, size: 16),
-                        onSelected: onMoveTo,
-                        itemBuilder: (context) => allColumns
-                            .where((c) => c.status != task.status)
-                            .map((c) => PopupMenuItem(
-                                  value: c.status,
-                                  child: Text('Move to ${c.title}'),
-                                ))
-                            .toList(),
+                        onSelected: (value) {
+                          if (value == null) {
+                            onDuplicate?.call();
+                          } else {
+                            onMoveTo?.call(value);
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          if (onDuplicate != null)
+                            const PopupMenuItem(
+                              value: null,
+                              child: Row(
+                                children: [
+                                  Icon(LucideIcons.copy, size: 15),
+                                  SizedBox(width: 8),
+                                  Text('Duplicate task'),
+                                ],
+                              ),
+                            ),
+                          if (onMoveTo != null)
+                            ...allColumns
+                                .where((c) => c.status != task.status)
+                                .map((c) => PopupMenuItem(
+                                      value: c.status,
+                                      child: Text('Move to ${c.title}'),
+                                    )),
+                        ],
                       ),
                   ],
                 ),

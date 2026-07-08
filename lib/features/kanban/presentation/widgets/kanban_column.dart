@@ -21,6 +21,7 @@ class KanbanColumn extends StatelessWidget {
     required this.onRenameColumn,
     required this.onAddTask,
     required this.onDeleteColumn,
+    this.onDuplicateTask,
   });
 
   final String status;
@@ -34,6 +35,7 @@ class KanbanColumn extends StatelessWidget {
   final void Function(String newTitle) onRenameColumn;
   final VoidCallback onAddTask;
   final VoidCallback onDeleteColumn;
+  final void Function(TaskModel)? onDuplicateTask;
 
   @override
   Widget build(BuildContext context) {
@@ -115,6 +117,9 @@ class KanbanColumn extends StatelessWidget {
                             allColumns: allColumns,
                             onTap: () => onCardTap(task),
                             onMoveTo: (newStatus) => onDropTask(task, newStatus),
+                            onDuplicate: onDuplicateTask == null
+                                ? null
+                                : () => onDuplicateTask!(task),
                           );
                           return Draggable<TaskModel>(
                             data: task,

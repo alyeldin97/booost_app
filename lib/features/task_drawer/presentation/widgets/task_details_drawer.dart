@@ -11,6 +11,7 @@ import '../../../../core/utils/date_formatters.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/widgets/fancy_confirm_dialog.dart';
 import '../../../../core/widgets/loading_indicator.dart';
+import '../../../../core/widgets/section_header.dart';
 import '../../../kanban/data/model/board_column_model.dart';
 import '../../../tasks/data/model/task_type_model.dart';
 import '../../../workspace/presentation/cubits/workspace_cubit.dart';
@@ -90,21 +91,33 @@ class _DrawerBodyState extends State<_DrawerBody> {
     final workspace = context.watch<WorkspaceCubit>().state;
     final linkedContent = workspace.contentItems
         .firstWhereOrNull((c) => c.id == task.linkedContentItemId);
+    final accent = task.clientColor != null
+        ? _colorFromHex(task.clientColor!)
+        : AppColors.clientColorFor(task.clientId);
 
     return SafeArea(
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 16, 8, 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [accent, accent.withValues(alpha: 0.65)],
+              ),
+            ),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _titleController,
-                    style: AppTextStyles.h3,
+                    style: AppTextStyles.h3.copyWith(color: Colors.white),
+                    cursorColor: Colors.white,
                     decoration: const InputDecoration(
                       border: InputBorder.none,
                       hintText: 'Task title',
+                      hintStyle: TextStyle(color: Colors.white70),
                       isDense: true,
                     ),
                     onSubmitted: cubit.updateTitle,
@@ -120,34 +133,45 @@ class _DrawerBodyState extends State<_DrawerBody> {
                     AppToast.success(context, 'Task saved');
                     cubit.closeDrawer();
                   },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: accent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                  ),
                   icon: const Icon(LucideIcons.check, size: 16),
                   label: const Text('Save'),
                 ),
                 IconButton(
-                  icon: const Icon(LucideIcons.trash2, size: 18),
+                  icon: const Icon(LucideIcons.copy, size: 18, color: Colors.white),
+                  tooltip: 'Duplicate task',
+                  onPressed: () => _duplicate(context, cubit),
+                ),
+                IconButton(
+                  icon: const Icon(LucideIcons.trash2, size: 18, color: Colors.white),
                   tooltip: 'Delete task',
                   onPressed: () => _confirmDelete(context, cubit),
                 ),
                 IconButton(
-                  icon: const Icon(LucideIcons.x, size: 20),
+                  icon: const Icon(LucideIcons.x, size: 20, color: Colors.white),
                   onPressed: cubit.closeDrawer,
                 ),
               ],
             ),
           ),
-          const Divider(height: 1),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _SectionLabel('Client'),
-                  const SizedBox(height: 6),
+            child: Container(
+              color: AppColors.background,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                  const SectionHeader(icon: LucideIcons.building2, title: 'Client', color: AppColors.success),
+                  const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     initialValue: task.clientId,
                     isExpanded: true,
-                    decoration: _fieldDecoration(),
+                    decoration: _fieldDecoration(color: AppColors.success),
                     items: workspace.clients
                         .map((c) => DropdownMenuItem(value: c.id, child: Text(c.name)))
                         .toList(),
@@ -155,18 +179,18 @@ class _DrawerBodyState extends State<_DrawerBody> {
                       if (id != null) cubit.updateClient(id);
                     },
                   ),
-                  const SizedBox(height: 16),
-                  _SectionLabel('Description'),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 18),
+                  const SectionHeader(icon: LucideIcons.notebookPen, title: 'Description', color: AppColors.info),
+                  const SizedBox(height: 8),
                   TextField(
                     controller: _descriptionController,
                     maxLines: 4,
                     style: AppTextStyles.body,
-                    decoration: _fieldDecoration(hint: 'Add a description...'),
+                    decoration: _fieldDecoration(hint: 'Add a description...', color: AppColors.info),
                     onEditingComplete: () =>
                         cubit.updateDescription(_descriptionController.text),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
                   Row(
                     children: [
                       Expanded(
@@ -205,24 +229,38 @@ class _DrawerBodyState extends State<_DrawerBody> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  _SectionLabel('Assigned team members'),
+                  const SectionHeader(icon: LucideIcons.users, title: 'Assigned team members', color: AppColors.accent),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: workspace.profiles.map((p) {
                       final isAssigned = task.assignees.any((a) => a.id == p.id);
+                      final color = AppColors.clientColorFor(p.id);
                       return FilterChip(
+                        avatar: CircleAvatar(
+                          radius: 10,
+                          backgroundColor: isAssigned ? color : AppColors.textMuted,
+                          child: Text(p.initials,
+                              style: const TextStyle(fontSize: 9, color: Colors.white)),
+                        ),
                         label: Text(p.displayName),
                         selected: isAssigned,
                         onSelected: (_) => cubit.toggleAssignee(p.id),
-                        selectedColor: AppColors.primaryLight,
-                        checkmarkColor: AppColors.primary,
+                        selectedColor: color.withValues(alpha: 0.14),
+                        checkmarkColor: color,
+                        side: BorderSide(
+                          color: isAssigned ? color.withValues(alpha: 0.5) : AppColors.border,
+                        ),
+                        labelStyle: TextStyle(
+                          color: isAssigned ? color : AppColors.textPrimary,
+                          fontWeight: isAssigned ? FontWeight.w600 : null,
+                        ),
                       );
                     }).toList(),
                   ),
                   const SizedBox(height: 20),
-                  _SectionLabel('Platforms'),
+                  const SectionHeader(icon: LucideIcons.share2, title: 'Platforms', color: AppColors.highlightPink),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -248,19 +286,28 @@ class _DrawerBodyState extends State<_DrawerBody> {
                     }).toList(),
                   ),
                   const SizedBox(height: 20),
-                  _SectionLabel('Labels'),
+                  const SectionHeader(icon: LucideIcons.tag, title: 'Labels', color: AppColors.warning),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
                       for (final label in task.labels)
-                        Chip(label: Text(label)),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: _labelColor(label).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: _labelColor(label).withValues(alpha: 0.3)),
+                          ),
+                          child: Text(label,
+                              style: AppTextStyles.label.copyWith(color: _labelColor(label))),
+                        ),
                       SizedBox(
                         width: 140,
                         child: TextField(
                           controller: _labelController,
-                          decoration: _fieldDecoration(hint: 'Add label...'),
+                          decoration: _fieldDecoration(hint: 'Add label...', color: AppColors.warning),
                           onSubmitted: (v) {
                             if (v.trim().isNotEmpty) {
                               cubit.addLabel(v.trim());
@@ -272,13 +319,14 @@ class _DrawerBodyState extends State<_DrawerBody> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  _SectionLabel('Checklist'),
+                  const SectionHeader(icon: LucideIcons.listChecks, title: 'Checklist', color: AppColors.primary),
                   const SizedBox(height: 8),
                   for (final item in task.checklistItems)
                     Row(
                       children: [
                         Checkbox(
                           value: item.isCompleted,
+                          activeColor: AppColors.primary,
                           onChanged: (v) =>
                               cubit.toggleChecklistItem(item.id, v ?? false),
                         ),
@@ -303,7 +351,7 @@ class _DrawerBodyState extends State<_DrawerBody> {
                       Expanded(
                         child: TextField(
                           controller: _checklistController,
-                          decoration: _fieldDecoration(hint: 'Add checklist item...'),
+                          decoration: _fieldDecoration(hint: 'Add checklist item...', color: AppColors.primary),
                           onSubmitted: (v) {
                             if (v.trim().isNotEmpty) {
                               cubit.addChecklistItem(v.trim());
@@ -315,13 +363,13 @@ class _DrawerBodyState extends State<_DrawerBody> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  _SectionLabel('Attachments'),
+                  const SectionHeader(icon: LucideIcons.paperclip, title: 'Attachments', color: AppColors.info),
                   const SizedBox(height: 8),
                   for (final a in task.attachments)
                     ListTile(
                       dense: true,
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(LucideIcons.paperclip, size: 16),
+                      leading: const Icon(LucideIcons.paperclip, size: 16, color: AppColors.info),
                       title: Text(a.fileName, style: AppTextStyles.body),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -347,18 +395,23 @@ class _DrawerBodyState extends State<_DrawerBody> {
                         await cubit.addAttachment(result.files.first);
                       }
                     },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.info,
+                      side: const BorderSide(color: AppColors.info),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                    ),
                     icon: const Icon(LucideIcons.upload, size: 15),
                     label: const Text('Upload file'),
                   ),
                   const SizedBox(height: 20),
                   if (linkedContent != null) ...[
-                    _SectionLabel('Linked content item'),
+                    const SectionHeader(icon: LucideIcons.link, title: 'Linked content item', color: AppColors.highlightPink),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.background,
-                        borderRadius: BorderRadius.circular(8),
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: AppColors.border),
                       ),
                       child: Row(
@@ -377,7 +430,7 @@ class _DrawerBodyState extends State<_DrawerBody> {
                     ),
                     const SizedBox(height: 20),
                   ],
-                  _SectionLabel('Comments'),
+                  const SectionHeader(icon: LucideIcons.messageSquare, title: 'Comments', color: AppColors.primary),
                   const SizedBox(height: 8),
                   for (final c in task.comments)
                     Padding(
@@ -397,7 +450,7 @@ class _DrawerBodyState extends State<_DrawerBody> {
                       Expanded(
                         child: TextField(
                           controller: _commentController,
-                          decoration: _fieldDecoration(hint: 'Write a comment...'),
+                          decoration: _fieldDecoration(hint: 'Write a comment...', color: AppColors.primary),
                           onSubmitted: (v) {
                             if (v.trim().isNotEmpty) {
                               cubit.addComment(v.trim());
@@ -409,7 +462,7 @@ class _DrawerBodyState extends State<_DrawerBody> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  _SectionLabel('Activity'),
+                  const SectionHeader(icon: LucideIcons.activity, title: 'Activity', color: AppColors.textSecondary),
                   const SizedBox(height: 8),
                   for (final log in widget.state.activity)
                     Padding(
@@ -419,13 +472,19 @@ class _DrawerBodyState extends State<_DrawerBody> {
                         style: AppTextStyles.caption,
                       ),
                     ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _duplicate(BuildContext context, TaskDrawerCubit cubit) async {
+    await cubit.duplicateTask();
+    if (context.mounted) AppToast.success(context, 'Task duplicated');
   }
 
   Future<void> _confirmDelete(BuildContext context, TaskDrawerCubit cubit) async {
@@ -437,33 +496,56 @@ class _DrawerBodyState extends State<_DrawerBody> {
     if (confirmed) cubit.deleteTask();
   }
 
-  InputDecoration _fieldDecoration({String? hint}) => InputDecoration(
+  Color _colorFromHex(String hex) {
+    final cleaned = hex.replaceAll('#', '');
+    final value = int.tryParse('FF$cleaned', radix: 16);
+    return value != null ? Color(value) : AppColors.primary;
+  }
+
+  Color _labelColor(String label) => AppColors.clientColorFor(label);
+
+  InputDecoration _fieldDecoration({String? hint, Color color = AppColors.primary}) =>
+      InputDecoration(
         hintText: hint,
         isDense: true,
         filled: true,
-        fillColor: AppColors.background,
+        fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.primary),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: color, width: 1.6),
         ),
       );
 }
 
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.text);
-  final String text;
-  @override
-  Widget build(BuildContext context) => Text(text, style: AppTextStyles.subtitle);
-}
+InputDecoration _drawerDropdownDecoration(String label, Color color) => InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(color: color),
+      isDense: true,
+      filled: true,
+      fillColor: AppColors.surface,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: AppColors.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: color, width: 1.6),
+      ),
+    );
 
 class _StatusDropdown extends StatelessWidget {
   const _StatusDropdown({required this.value, required this.columns, required this.onChanged});
@@ -476,11 +558,7 @@ class _StatusDropdown extends StatelessWidget {
     final options = {value, ...columns.map((c) => c.status)}.toList();
     return DropdownButtonFormField<String>(
       initialValue: value,
-      decoration: InputDecoration(
-        labelText: 'Status',
-        isDense: true,
-        border: const OutlineInputBorder(),
-      ),
+      decoration: _drawerDropdownDecoration('Status', AppColors.accent),
       items: options
           .map((s) => DropdownMenuItem(
                 value: s,
@@ -505,13 +583,23 @@ class _PriorityDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     return DropdownButtonFormField<TaskPriority>(
       initialValue: value,
-      decoration: const InputDecoration(
-        labelText: 'Priority',
-        isDense: true,
-        border: OutlineInputBorder(),
-      ),
+      decoration: _drawerDropdownDecoration('Priority', value.color),
       items: TaskPriority.values
-          .map((p) => DropdownMenuItem(value: p, child: Text(p.label)))
+          .map((p) => DropdownMenuItem(
+                value: p,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(color: p.color, shape: BoxShape.circle),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(p.label),
+                  ],
+                ),
+              ))
           .toList(),
       onChanged: (v) {
         if (v != null) onChanged(v);
@@ -535,11 +623,7 @@ class _TaskTypeDropdown extends StatelessWidget {
     final options = {value, ...types.map((t) => t.taskType)}.toList();
     return DropdownButtonFormField<String>(
       initialValue: value,
-      decoration: const InputDecoration(
-        labelText: 'Type',
-        isDense: true,
-        border: OutlineInputBorder(),
-      ),
+      decoration: _drawerDropdownDecoration('Type', AppColors.primary),
       items: options
           .map((t) => DropdownMenuItem(
                 value: t,
@@ -561,7 +645,9 @@ class _DueDateField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final overdue = value != null && DateFormatters.isOverdue(value);
     return InkWell(
+      borderRadius: BorderRadius.circular(10),
       onTap: () async {
         final pickedDate = await showDatePicker(
           context: context,
@@ -582,14 +668,23 @@ class _DueDateField extends StatelessWidget {
             pickedTime.hour, pickedTime.minute));
       },
       child: InputDecorator(
-        decoration: const InputDecoration(
-          labelText: 'Due date',
-          isDense: true,
-          border: OutlineInputBorder(),
-        ),
-        child: Text(
-          value != null ? DateFormatters.dateTime(value!) : 'None',
-          style: AppTextStyles.body,
+        decoration: _drawerDropdownDecoration(
+            'Due date', overdue ? AppColors.danger : AppColors.warning),
+        child: Row(
+          children: [
+            Icon(LucideIcons.calendarClock,
+                size: 14, color: overdue ? AppColors.danger : AppColors.warning),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                value != null ? DateFormatters.dateTime(value!) : 'None',
+                style: AppTextStyles.body.copyWith(
+                  color: overdue ? AppColors.danger : AppColors.textPrimary,
+                  fontWeight: overdue ? FontWeight.w600 : null,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

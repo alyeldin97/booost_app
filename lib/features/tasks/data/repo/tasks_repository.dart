@@ -64,6 +64,61 @@ class TasksRepository {
     return getTask(inserted['id'] as String);
   }
 
+  /// Copies title/description/status/priority/type/due-date, assignees,
+  /// platforms, labels and checklist items onto a new task. Attachments,
+  /// comments and activity history are intentionally left behind — those
+  /// belong to the original task's timeline, not the duplicate.
+  Future<TaskModel> duplicateTask(String taskId) async {
+    final source = await getTask(taskId);
+    final inserted = await _client
+        .from('tasks')
+        .insert({
+          'client_id': source.clientId,
+          'title': 'Copy of ${source.title}',
+          'description': source.description,
+          'status': source.status,
+          'priority': source.priority.dbValue,
+          'task_type': source.taskType,
+          'due_date': source.dueDate?.toIso8601String(),
+          'created_by': _client.auth.currentUser?.id,
+        })
+        .select('id')
+        .single();
+    final newId = inserted['id'] as String;
+
+    await Future.wait([
+      if (source.assignees.isNotEmpty)
+        _client.from('task_assignees').insert(
+              source.assignees
+                  .map((a) => {'task_id': newId, 'profile_id': a.id})
+                  .toList(),
+            ),
+      if (source.platforms.isNotEmpty)
+        _client.from('task_platforms').insert(
+              source.platforms
+                  .map((p) => {'task_id': newId, 'platform': p})
+                  .toList(),
+            ),
+      if (source.labels.isNotEmpty)
+        _client.from('task_labels').insert(
+              source.labels.map((l) => {'task_id': newId, 'label': l}).toList(),
+            ),
+      if (source.checklistItems.isNotEmpty)
+        _client.from('task_checklist_items').insert(
+              source.checklistItems
+                  .map((c) => {
+                        'task_id': newId,
+                        'title': c.title,
+                        'position': c.position,
+                        'is_completed': false,
+                      })
+                  .toList(),
+            ),
+    ]);
+
+    return getTask(newId);
+  }
+
   Future<void> updateTask(String id, Map<String, dynamic> changes) async {
     await _client.from('tasks').update(changes).eq('id', id);
   }

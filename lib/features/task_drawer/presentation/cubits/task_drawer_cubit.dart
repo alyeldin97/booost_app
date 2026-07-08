@@ -142,4 +142,18 @@ class TaskDrawerCubit extends Cubit<TaskDrawerCubitState> {
     await _tasksRepository.deleteTask(id);
     closeDrawer();
   }
+
+  /// Duplicates the currently open task and switches the drawer over to
+  /// the new copy, so the user lands somewhere they can keep editing.
+  Future<void> duplicateTask() async {
+    final id = state.task?.id;
+    if (id == null) return;
+    try {
+      final duplicate = await _tasksRepository.duplicateTask(id);
+      await open(duplicate.id);
+    } catch (e, st) {
+      AppLogger.error('TaskDrawerCubit.duplicateTask failed', e, st);
+      emit(state.copyWith(errorMessage: e.toString()));
+    }
+  }
 }
