@@ -113,6 +113,8 @@ class _ContentCreationBoard extends StatelessWidget {
                             columns: columns,
                           ),
                           onDeleteColumn: () => _deleteColumn(context, columns[i], grouped),
+                          onDuplicateItem: (item) => _duplicateItem(context, item),
+                          onDeleteItem: (item) => _deleteItem(context, item),
                         ),
                       _AddColumnButton(nextPosition: columns.length),
                     ],
@@ -124,6 +126,36 @@ class _ContentCreationBoard extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<void> _duplicateItem(BuildContext context, ContentCreationItemModel item) async {
+    try {
+      await context.read<ContentCreationItemsRepository>().duplicateItem(item.id);
+      if (context.mounted) {
+        await context.read<WorkspaceCubit>().load();
+        if (context.mounted) AppToast.success(context, 'Content duplicated');
+      }
+    } catch (e) {
+      if (context.mounted) AppToast.error(context, 'Could not duplicate content: $e');
+    }
+  }
+
+  Future<void> _deleteItem(BuildContext context, ContentCreationItemModel item) async {
+    final confirmed = await showFancyConfirmDialog(
+      context,
+      title: 'Delete "${item.name}"?',
+      message: 'This cannot be undone.',
+    );
+    if (!confirmed || !context.mounted) return;
+    try {
+      await context.read<ContentCreationItemsRepository>().deleteItem(item.id);
+      if (context.mounted) {
+        await context.read<WorkspaceCubit>().load();
+        if (context.mounted) AppToast.success(context, 'Content deleted');
+      }
+    } catch (e) {
+      if (context.mounted) AppToast.error(context, 'Could not delete content: $e');
+    }
   }
 
   Future<void> _deleteColumn(BuildContext context, BoardColumnModel column,

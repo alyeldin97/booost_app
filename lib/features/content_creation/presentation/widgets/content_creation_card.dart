@@ -6,10 +6,18 @@ import '../../../../core/utils/date_formatters.dart';
 import '../../data/model/content_creation_item_model.dart';
 
 class ContentCreationCard extends StatelessWidget {
-  const ContentCreationCard({super.key, required this.item, this.onTap});
+  const ContentCreationCard({
+    super.key,
+    required this.item,
+    this.onTap,
+    this.onDuplicate,
+    this.onDelete,
+  });
 
   final ContentCreationItemModel item;
   final VoidCallback? onTap;
+  final VoidCallback? onDuplicate;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -45,9 +53,54 @@ class ContentCreationCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (item.clientName != null) ...[
-                Text(item.clientName!,
-                    style: AppTextStyles.caption, overflow: TextOverflow.ellipsis),
+              if (item.clientName != null || onDuplicate != null || onDelete != null) ...[
+                Row(
+                  children: [
+                    if (item.clientName != null)
+                      Expanded(
+                        child: Text(item.clientName!,
+                            style: AppTextStyles.caption, overflow: TextOverflow.ellipsis),
+                      )
+                    else
+                      const Spacer(),
+                    if (onDuplicate != null || onDelete != null)
+                      PopupMenuButton<String>(
+                        tooltip: 'Card options',
+                        icon: const Icon(LucideIcons.moreHorizontal, size: 16),
+                        onSelected: (value) {
+                          if (value == 'duplicate') {
+                            onDuplicate?.call();
+                          } else if (value == 'delete') {
+                            onDelete?.call();
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          if (onDuplicate != null)
+                            const PopupMenuItem(
+                              value: 'duplicate',
+                              child: Row(
+                                children: [
+                                  Icon(LucideIcons.copy, size: 15),
+                                  SizedBox(width: 8),
+                                  Text('Duplicate'),
+                                ],
+                              ),
+                            ),
+                          if (onDelete != null)
+                            PopupMenuItem(
+                              value: 'delete',
+                              child: Row(
+                                children: [
+                                  Icon(LucideIcons.trash2, size: 15, color: AppColors.danger),
+                                  const SizedBox(width: 8),
+                                  Text('Delete', style: TextStyle(color: AppColors.danger)),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                  ],
+                ),
                 const SizedBox(height: 4),
               ],
               Text(

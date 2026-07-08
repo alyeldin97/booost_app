@@ -118,6 +118,7 @@ class _KanbanBoard extends StatelessWidget {
                               onDeleteColumn: () =>
                                   _deleteColumn(context, columns[i], grouped),
                               onDuplicateTask: (task) => _duplicateTask(context, task),
+                              onDeleteTask: (task) => _deleteTask(context, task),
                             ),
                           _AddColumnButton(nextPosition: columns.length),
                         ],
@@ -218,6 +219,24 @@ class _KanbanBoard extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) AppToast.error(context, 'Could not duplicate task: $e');
+    }
+  }
+
+  Future<void> _deleteTask(BuildContext context, TaskModel task) async {
+    final confirmed = await showFancyConfirmDialog(
+      context,
+      title: 'Delete "${task.title}"?',
+      message: 'This cannot be undone.',
+    );
+    if (!confirmed || !context.mounted) return;
+    try {
+      await context.read<TasksRepository>().deleteTask(task.id);
+      if (context.mounted) {
+        await context.read<WorkspaceCubit>().load();
+        if (context.mounted) AppToast.success(context, 'Task deleted');
+      }
+    } catch (e) {
+      if (context.mounted) AppToast.error(context, 'Could not delete task: $e');
     }
   }
 

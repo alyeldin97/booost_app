@@ -22,6 +22,7 @@ class KanbanColumn extends StatelessWidget {
     required this.onAddTask,
     required this.onDeleteColumn,
     this.onDuplicateTask,
+    this.onDeleteTask,
   });
 
   final String status;
@@ -36,6 +37,7 @@ class KanbanColumn extends StatelessWidget {
   final VoidCallback onAddTask;
   final VoidCallback onDeleteColumn;
   final void Function(TaskModel)? onDuplicateTask;
+  final void Function(TaskModel)? onDeleteTask;
 
   @override
   Widget build(BuildContext context) {
@@ -120,6 +122,9 @@ class KanbanColumn extends StatelessWidget {
                             onDuplicate: onDuplicateTask == null
                                 ? null
                                 : () => onDuplicateTask!(task),
+                            onDelete: onDeleteTask == null
+                                ? null
+                                : () => onDeleteTask!(task),
                           );
                           return Draggable<TaskModel>(
                             data: task,

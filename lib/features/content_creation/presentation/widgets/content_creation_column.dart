@@ -19,6 +19,8 @@ class ContentCreationColumn extends StatelessWidget {
     required this.onRenameColumn,
     required this.onAddItem,
     required this.onDeleteColumn,
+    this.onDuplicateItem,
+    this.onDeleteItem,
   });
 
   final String status;
@@ -31,6 +33,8 @@ class ContentCreationColumn extends StatelessWidget {
   final void Function(String newTitle) onRenameColumn;
   final VoidCallback onAddItem;
   final VoidCallback onDeleteColumn;
+  final void Function(ContentCreationItemModel)? onDuplicateItem;
+  final void Function(ContentCreationItemModel)? onDeleteItem;
 
   @override
   Widget build(BuildContext context) {
@@ -109,6 +113,11 @@ class ContentCreationColumn extends StatelessWidget {
                           final card = ContentCreationCard(
                             item: item,
                             onTap: () => onCardTap(item),
+                            onDuplicate: onDuplicateItem == null
+                                ? null
+                                : () => onDuplicateItem!(item),
+                            onDelete:
+                                onDeleteItem == null ? null : () => onDeleteItem!(item),
                           );
                           return Draggable<ContentCreationItemModel>(
                             data: item,

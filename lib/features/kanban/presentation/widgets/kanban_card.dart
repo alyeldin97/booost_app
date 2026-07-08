@@ -18,6 +18,7 @@ class KanbanCard extends StatelessWidget {
     this.onTap,
     this.onMoveTo,
     this.onDuplicate,
+    this.onDelete,
   });
 
   final TaskModel task;
@@ -27,6 +28,10 @@ class KanbanCard extends StatelessWidget {
   final VoidCallback? onTap;
   final void Function(String)? onMoveTo;
   final VoidCallback? onDuplicate;
+  final VoidCallback? onDelete;
+
+  static const _duplicateValue = '__duplicate__';
+  static const _deleteValue = '__delete__';
 
   @override
   Widget build(BuildContext context) {
@@ -92,13 +97,15 @@ class KanbanCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (onMoveTo != null || onDuplicate != null)
-                      PopupMenuButton<String?>(
+                    if (onMoveTo != null || onDuplicate != null || onDelete != null)
+                      PopupMenuButton<String>(
                         tooltip: 'Card options',
                         icon: const Icon(LucideIcons.moreHorizontal, size: 16),
                         onSelected: (value) {
-                          if (value == null) {
+                          if (value == _duplicateValue) {
                             onDuplicate?.call();
+                          } else if (value == _deleteValue) {
+                            onDelete?.call();
                           } else {
                             onMoveTo?.call(value);
                           }
@@ -106,7 +113,7 @@ class KanbanCard extends StatelessWidget {
                         itemBuilder: (context) => [
                           if (onDuplicate != null)
                             const PopupMenuItem(
-                              value: null,
+                              value: _duplicateValue,
                               child: Row(
                                 children: [
                                   Icon(LucideIcons.copy, size: 15),
@@ -122,6 +129,18 @@ class KanbanCard extends StatelessWidget {
                                       value: c.status,
                                       child: Text('Move to ${c.title}'),
                                     )),
+                          if (onDelete != null)
+                            PopupMenuItem(
+                              value: _deleteValue,
+                              child: Row(
+                                children: [
+                                  Icon(LucideIcons.trash2, size: 15, color: AppColors.danger),
+                                  const SizedBox(width: 8),
+                                  Text('Delete task',
+                                      style: TextStyle(color: AppColors.danger)),
+                                ],
+                              ),
+                            ),
                         ],
                       ),
                   ],
