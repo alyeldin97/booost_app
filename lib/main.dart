@@ -135,7 +135,22 @@ class _BooostAppState extends State<BooostApp> {
       scaffoldBackgroundColor: AppColors.background,
       fontFamily: GoogleFonts.inter().fontFamily,
     );
+    // Bumped up from Material's default weights so buttons, chips, dropdown
+    // items, and DataTable cells — anything not going through
+    // AppTextStyles directly — read as bolder too, not just headings.
+    final boldTextTheme = base.textTheme.copyWith(
+      bodyLarge: base.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+      bodyMedium: base.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+      bodySmall: base.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+      titleLarge: base.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+      titleMedium: base.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+      titleSmall: base.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+      labelLarge: base.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+      labelMedium: base.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
+      labelSmall: base.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700),
+    );
     return base.copyWith(
+      textTheme: boldTextTheme,
       focusColor: AppColors.primary,
       textSelectionTheme: const TextSelectionThemeData(
         cursorColor: AppColors.highlightPink,
