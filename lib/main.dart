@@ -138,9 +138,9 @@ class _BooostAppState extends State<BooostApp> {
     return base.copyWith(
       focusColor: AppColors.primary,
       textSelectionTheme: const TextSelectionThemeData(
-        cursorColor: AppColors.primary,
-        selectionColor: AppColors.primaryLight,
-        selectionHandleColor: AppColors.primary,
+        cursorColor: AppColors.highlightPink,
+        selectionColor: AppColors.highlightPinkLight,
+        selectionHandleColor: AppColors.highlightPink,
       ),
     );
   }
