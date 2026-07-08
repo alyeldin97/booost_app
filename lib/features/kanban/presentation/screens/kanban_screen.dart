@@ -92,7 +92,6 @@ class _KanbanBoard extends StatelessWidget {
                               status: columns[i].status,
                               title: columns[i].title,
                               color: AppColors.columnColorFor(i),
-                              allColumns: columns,
                               tasks: grouped[columns[i].status] ?? const [],
                               contentItemsByTaskId: contentByTaskId,
                               onCardTap: (task) =>

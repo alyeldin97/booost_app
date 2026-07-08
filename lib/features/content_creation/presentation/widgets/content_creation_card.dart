@@ -63,41 +63,19 @@ class ContentCreationCard extends StatelessWidget {
                       )
                     else
                       const Spacer(),
-                    if (onDuplicate != null || onDelete != null)
-                      PopupMenuButton<String>(
-                        tooltip: 'Card options',
-                        icon: const Icon(LucideIcons.moreHorizontal, size: 16),
-                        onSelected: (value) {
-                          if (value == 'duplicate') {
-                            onDuplicate?.call();
-                          } else if (value == 'delete') {
-                            onDelete?.call();
-                          }
-                        },
-                        itemBuilder: (context) => [
-                          if (onDuplicate != null)
-                            const PopupMenuItem(
-                              value: 'duplicate',
-                              child: Row(
-                                children: [
-                                  Icon(LucideIcons.copy, size: 15),
-                                  SizedBox(width: 8),
-                                  Text('Duplicate'),
-                                ],
-                              ),
-                            ),
-                          if (onDelete != null)
-                            PopupMenuItem(
-                              value: 'delete',
-                              child: Row(
-                                children: [
-                                  Icon(LucideIcons.trash2, size: 15, color: AppColors.danger),
-                                  const SizedBox(width: 8),
-                                  Text('Delete', style: TextStyle(color: AppColors.danger)),
-                                ],
-                              ),
-                            ),
-                        ],
+                    if (onDuplicate != null)
+                      IconButton(
+                        tooltip: 'Duplicate',
+                        icon: const Icon(LucideIcons.copy, size: 15),
+                        visualDensity: VisualDensity.compact,
+                        onPressed: onDuplicate,
+                      ),
+                    if (onDelete != null)
+                      IconButton(
+                        tooltip: 'Delete',
+                        icon: const Icon(LucideIcons.trash2, size: 15, color: AppColors.danger),
+                        visualDensity: VisualDensity.compact,
+                        onPressed: onDelete,
                       ),
                   ],
                 ),

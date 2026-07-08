@@ -6,32 +6,24 @@ import '../../../../core/utils/app_enums.dart';
 import '../../../../core/utils/date_formatters.dart';
 import '../../../content_calendar/data/model/content_item_model.dart';
 import '../../../tasks/data/model/task_model.dart';
-import '../../data/model/board_column_model.dart';
 
 class KanbanCard extends StatelessWidget {
   const KanbanCard({
     super.key,
     required this.task,
     required this.linkedContentItem,
-    required this.allColumns,
     this.isDragging = false,
     this.onTap,
-    this.onMoveTo,
     this.onDuplicate,
     this.onDelete,
   });
 
   final TaskModel task;
   final ContentItemModel? linkedContentItem;
-  final List<BoardColumnModel> allColumns;
   final bool isDragging;
   final VoidCallback? onTap;
-  final void Function(String)? onMoveTo;
   final VoidCallback? onDuplicate;
   final VoidCallback? onDelete;
-
-  static const _duplicateValue = '__duplicate__';
-  static const _deleteValue = '__delete__';
 
   @override
   Widget build(BuildContext context) {
@@ -97,51 +89,19 @@ class KanbanCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (onMoveTo != null || onDuplicate != null || onDelete != null)
-                      PopupMenuButton<String>(
-                        tooltip: 'Card options',
-                        icon: const Icon(LucideIcons.moreHorizontal, size: 16),
-                        onSelected: (value) {
-                          if (value == _duplicateValue) {
-                            onDuplicate?.call();
-                          } else if (value == _deleteValue) {
-                            onDelete?.call();
-                          } else {
-                            onMoveTo?.call(value);
-                          }
-                        },
-                        itemBuilder: (context) => [
-                          if (onDuplicate != null)
-                            const PopupMenuItem(
-                              value: _duplicateValue,
-                              child: Row(
-                                children: [
-                                  Icon(LucideIcons.copy, size: 15),
-                                  SizedBox(width: 8),
-                                  Text('Duplicate task'),
-                                ],
-                              ),
-                            ),
-                          if (onMoveTo != null)
-                            ...allColumns
-                                .where((c) => c.status != task.status)
-                                .map((c) => PopupMenuItem(
-                                      value: c.status,
-                                      child: Text('Move to ${c.title}'),
-                                    )),
-                          if (onDelete != null)
-                            PopupMenuItem(
-                              value: _deleteValue,
-                              child: Row(
-                                children: [
-                                  Icon(LucideIcons.trash2, size: 15, color: AppColors.danger),
-                                  const SizedBox(width: 8),
-                                  Text('Delete task',
-                                      style: TextStyle(color: AppColors.danger)),
-                                ],
-                              ),
-                            ),
-                        ],
+                    if (onDuplicate != null)
+                      IconButton(
+                        tooltip: 'Duplicate task',
+                        icon: const Icon(LucideIcons.copy, size: 15),
+                        visualDensity: VisualDensity.compact,
+                        onPressed: onDuplicate,
+                      ),
+                    if (onDelete != null)
+                      IconButton(
+                        tooltip: 'Delete task',
+                        icon: const Icon(LucideIcons.trash2, size: 15, color: AppColors.danger),
+                        visualDensity: VisualDensity.compact,
+                        onPressed: onDelete,
                       ),
                   ],
                 ),

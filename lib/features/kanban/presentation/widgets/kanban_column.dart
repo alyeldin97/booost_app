@@ -4,7 +4,6 @@ import '../../../../core/styling/app_colors.dart';
 import '../../../../core/styling/app_text_styles.dart';
 import '../../../content_calendar/data/model/content_item_model.dart';
 import '../../../tasks/data/model/task_model.dart';
-import '../../data/model/board_column_model.dart';
 import 'kanban_card.dart';
 
 class KanbanColumn extends StatelessWidget {
@@ -13,7 +12,6 @@ class KanbanColumn extends StatelessWidget {
     required this.status,
     required this.title,
     required this.color,
-    required this.allColumns,
     required this.tasks,
     required this.contentItemsByTaskId,
     required this.onCardTap,
@@ -28,7 +26,6 @@ class KanbanColumn extends StatelessWidget {
   final String status;
   final String title;
   final Color color;
-  final List<BoardColumnModel> allColumns;
   final List<TaskModel> tasks;
   final Map<String, ContentItemModel> contentItemsByTaskId;
   final void Function(TaskModel) onCardTap;
@@ -116,9 +113,7 @@ class KanbanColumn extends StatelessWidget {
                           final card = KanbanCard(
                             task: task,
                             linkedContentItem: contentItemsByTaskId[task.id],
-                            allColumns: allColumns,
                             onTap: () => onCardTap(task),
-                            onMoveTo: (newStatus) => onDropTask(task, newStatus),
                             onDuplicate: onDuplicateTask == null
                                 ? null
                                 : () => onDuplicateTask!(task),
