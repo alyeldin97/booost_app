@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/styling/app_colors.dart';
 import '../../../../core/styling/app_text_styles.dart';
+import '../../../../core/styling/breakpoints.dart';
 import '../../../kanban/data/model/board_column_model.dart';
 import '../../data/model/content_creation_item_model.dart';
 import 'content_creation_card.dart';
@@ -43,8 +44,11 @@ class ContentCreationColumn extends StatelessWidget {
       onAcceptWithDetails: (details) => onDropItem(details.data, status),
       builder: (context, candidateData, rejectedData) {
         final isHovering = candidateData.isNotEmpty;
+        final width = Breakpoints.isMobile(context)
+            ? MediaQuery.sizeOf(context).width - 32
+            : 300.0;
         return Container(
-          width: 300,
+          width: width,
           margin: const EdgeInsets.only(right: 14),
           decoration: BoxDecoration(
             color: isHovering ? color.withValues(alpha: 0.12) : AppColors.background,

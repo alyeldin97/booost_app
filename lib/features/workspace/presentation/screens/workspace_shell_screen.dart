@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/styling/app_colors.dart';
 import '../../../../core/styling/app_text_styles.dart';
+import '../../../../core/styling/breakpoints.dart';
 import '../../../task_drawer/presentation/cubits/task_drawer_cubit.dart';
 import '../../../task_drawer/presentation/widgets/task_details_drawer.dart';
 import '../cubits/filters_cubit.dart';
@@ -93,6 +94,41 @@ class _WorkspaceShellScreenState extends State<WorkspaceShellScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = Breakpoints.isMobile(context);
+
+    final tabsBar = Container(
+      width: double.infinity,
+      color: AppColors.surface,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (var i = 0; i < _tabs.length; i++) ...[
+              if (i > 0) const SizedBox(width: 6),
+              _TabButton(
+                label: _tabs[i].label,
+                icon: _tabs[i].icon,
+                selected: widget.navigationShell.currentIndex == i,
+                onTap: () => widget.navigationShell.goBranch(
+                  i,
+                  initialLocation: i == widget.navigationShell.currentIndex,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+
+    final content = Column(
+      children: [
+        FilterToolbar(onFiltersChanged: _pushFiltersToUrl),
+        tabsBar,
+        Expanded(child: widget.navigationShell),
+      ],
+    );
+
     return BlocListener<TaskDrawerCubit, TaskDrawerCubitState>(
       listenWhen: (prev, curr) => prev.isOpen != curr.isOpen,
       listener: (context, state) {
@@ -106,48 +142,29 @@ class _WorkspaceShellScreenState extends State<WorkspaceShellScreen> {
       },
       child: Scaffold(
         key: _scaffoldKey,
+        // On mobile the fixed sidebar rail becomes a slide-in Drawer opened
+        // from a hamburger button instead of always occupying screen width.
+        appBar: isMobile
+            ? AppBar(
+                backgroundColor: AppColors.surface,
+                elevation: 0,
+                foregroundColor: AppColors.textPrimary,
+                title: Text('Booost', style: AppTextStyles.h3),
+              )
+            : null,
+        drawer: isMobile ? const Drawer(width: 224, child: AppSidebar()) : null,
         endDrawer: const TaskDetailsDrawer(),
         onEndDrawerChanged: (isOpen) {
           if (!isOpen) context.read<TaskDrawerCubit>().closeDrawer();
         },
-        body: Row(
-          children: [
-            const AppSidebar(),
-            Expanded(
-              child: Column(
+        body: isMobile
+            ? content
+            : Row(
                 children: [
-                  FilterToolbar(onFiltersChanged: _pushFiltersToUrl),
-                  Container(
-                    width: double.infinity,
-                    color: AppColors.surface,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      children: [
-                        for (var i = 0; i < _tabs.length; i++) ...[
-                          if (i > 0) const SizedBox(width: 6),
-                          _TabButton(
-                            label: _tabs[i].label,
-                            icon: _tabs[i].icon,
-                            selected: widget.navigationShell.currentIndex == i,
-                            onTap: () => widget.navigationShell.goBranch(
-                              i,
-                              initialLocation:
-                                  i == widget.navigationShell.currentIndex,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  Expanded(child: widget.navigationShell),
+                  const AppSidebar(),
+                  Expanded(child: content),
                 ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/styling/app_colors.dart';
 import '../../../../core/styling/app_text_styles.dart';
+import '../../../../core/styling/breakpoints.dart';
 import '../../../content_calendar/data/model/content_item_model.dart';
 import '../../../tasks/data/model/task_model.dart';
 import 'kanban_card.dart';
@@ -43,8 +44,14 @@ class KanbanColumn extends StatelessWidget {
       onAcceptWithDetails: (details) => onDropTask(details.data, status),
       builder: (context, candidateData, rejectedData) {
         final isHovering = candidateData.isNotEmpty;
+        // Near-full-width on mobile so swiping between columns reads as
+        // one card-column at a time, instead of Flutter's desktop-sized
+        // fixed 300px columns leaving an awkward sliver of the next one.
+        final width = Breakpoints.isMobile(context)
+            ? MediaQuery.sizeOf(context).width - 32
+            : 300.0;
         return Container(
-          width: 300,
+          width: width,
           margin: const EdgeInsets.only(right: 14),
           decoration: BoxDecoration(
             color: isHovering ? color.withValues(alpha: 0.12) : AppColors.background,

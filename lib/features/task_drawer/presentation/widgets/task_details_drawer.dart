@@ -12,6 +12,7 @@ import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/widgets/fancy_confirm_dialog.dart';
 import '../../../../core/widgets/loading_indicator.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../../core/styling/breakpoints.dart';
 import '../../../kanban/data/model/board_column_model.dart';
 import '../../../tasks/data/model/task_type_model.dart';
 import '../../../workspace/presentation/cubits/workspace_cubit.dart';
@@ -22,8 +23,11 @@ class TaskDetailsDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final width = Breakpoints.isMobile(context)
+        ? MediaQuery.sizeOf(context).width
+        : 440.0;
     return Drawer(
-      width: 440,
+      width: width,
       child: BlocConsumer<TaskDrawerCubit, TaskDrawerCubitState>(
         listenWhen: (prev, curr) => prev.errorMessage != curr.errorMessage,
         listener: (context, state) {

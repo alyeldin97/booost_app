@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/styling/app_colors.dart';
 import '../../../../core/styling/app_text_styles.dart';
+import '../../../../core/styling/breakpoints.dart';
 import '../../../../core/utils/app_enums.dart';
 import '../../../../core/utils/date_formatters.dart';
 import '../../../content_calendar/data/model/content_item_model.dart';
@@ -43,7 +44,9 @@ class KanbanCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           onTap: onTap,
           child: Container(
-            width: 260,
+            width: Breakpoints.isMobile(context)
+                ? MediaQuery.sizeOf(context).width - 64
+                : 260,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
